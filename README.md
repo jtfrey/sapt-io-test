@@ -115,8 +115,6 @@ There is no longer as significant a performance spread because the C library is 
 
 The actual work this code is performing is a transpose of indexed data.  The input file consists of a 4d tensor of dimension n1 x n2 x n3, correlating with indices (i, j, k).  The input file is indexed by j, k, and finally i:  the first word in the file is (1, 1, 1), the second is (1, 2, 1), up to (1, n2, 1) at which point k increments to (1,1,2).  The goal is to reorganize that data in another file, indexed by j, i, and finally k.
 
-
-
 ```
 [frey@login01.darwin sapt-io-test]$ for ALGORITHM in vector_output matrix; do \
     rm -f jik.dat; \
@@ -142,3 +140,34 @@ INFO:  using algorithm 'matrix'
 INFO:  read+write matrices of size 2 x 1.61 MiB (1686256 bytes) allocated
 INFO:  elapsed file processing time 1.391556 s
 ```
+
+Compare to the Unix file descriptor driver:
+
+```
+[frey@login01.darwin sapt-io-test]$ for ALGORITHM in vector_output matrix; do \
+    rm -f jik.dat; \
+    ./jki_to_jik -i jki.dat -d fd --n1=67 --n2=733 --n3=3146 -a $ALGORITHM -o jik.dat; \
+    echo; \
+done
+
+INFO:  using i/o driver 'fd'
+INFO:  input file open for reading: jki.dat
+INFO:  (67, 733, 3146) data source is 1.15 GiB (1236025648 bytes)
+INFO:  input file is 1.15 GiB (1236025648 bytes)
+INFO:  output file open for writing: jik.dat
+INFO:  using algorithm 'vector_output'
+INFO:  write vector of size 24.58 KiB (25168 bytes) allocated
+INFO:  elapsed file processing time 89.870969 s
+
+INFO:  using i/o driver 'fd'
+INFO:  input file open for reading: jki.dat
+INFO:  (67, 733, 3146) data source is 1.15 GiB (1236025648 bytes)
+INFO:  input file is 1.15 GiB (1236025648 bytes)
+INFO:  output file open for writing: jik.dat
+INFO:  using algorithm 'matrix'
+INFO:  read+write matrices of size 2 x 1.61 MiB (1686256 bytes) allocated
+INFO:  elapsed file processing time 1.561527 s
+```
+
+These tests were run on the DARWIN /lustre file system.
+
